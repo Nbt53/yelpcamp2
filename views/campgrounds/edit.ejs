@@ -1,0 +1,53 @@
+<% layout('layouts/boilerplate') %>
+    <div class="row">
+        <div class="text-center">
+            <h1>Edit Campground</h1>
+
+            <div class="col-6 offset-3">
+                <form action="/campgrounds/<%= campground._id %>?_method=PUT" , method="POST" novalidate
+                    class="validated-form">
+                    <div class="mb-3">
+                        <label class="form-label" for="title">Camp Name</label><input class="form-control" type="text"
+                            id="title" name="campground[title] " value="<%= campground.title %>" required>
+                        <div class="valid-feedback">It's Correct</div>
+                    </div>
+
+                    <div class="mb-3"> <label class="form-label" for="location">Camp Location</label><input
+                            class="form-control" type="text" id="location" name="campground[location]"
+                            value="<%= campground.location %>" required>
+                        <div class="valid-feedback">It's Correct</div>
+                    </div>
+
+
+                    <div class="mb-3"> <label class="form-label" for="image">Image URL</label><input
+                            class="form-control" type="text" id="image" name="campground[image]"
+                            value="<%= campground.image %>" required>
+                        <div class="valid-feedback">It's Correct</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="mb-3"> <label class="form-label" for="price">Campground Price</label>
+                            <div class="input-group ">
+                                <span class="input-group-text" id="price-label">£</span>
+                                <input type="text" class="form-control" placeholder="0.00" id="price" aria-label="price"
+                                    aria-describedby="price-label" name="campground[price]"
+                                    value="<%= campground.price %>" required>
+                                <div class="valid-feedback">It's Correct</div>
+                            </div>
+                        </div>
+
+
+                        <div class="mb-3"> <label class="form-label" for="image">Description</label><textarea
+                                class="form-control" type="text" id="description" name="campground[description]"
+                                required><%= campground.description %> </textarea>
+                            <div class="valid-feedback">It's Correct</div>
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-info">Update Campground</button>
+                        </div>
+
+                        <a href="/campgrounds/<%= campground._id %> ">Back to campground</a>
+                </form>
+            </div>
+        </div>
+    </div>
