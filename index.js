@@ -13,14 +13,16 @@ const flash = require('connect-flash');
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const User = require('./models/user')
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
+const MongoStore = require('connect-mongo');
+const dbUrl = 'mongodb://localhost:27017/yelp-camp'// process.env.DB_URL
 
-
-const campgroundsRoutes = require('./routes/campgrounds')
-const reviewsRoutes = require('./routes/reviews')
-const usersRoutes = require('./routes/users')
-
-
-mongoose.connect('mongodb://localhost:27017/yelp-camp'), {
+const campgroundsRoutes = require('./routes/campgrounds');
+const reviewsRoutes = require('./routes/reviews');
+const usersRoutes = require('./routes/users');
+//'mongodb://localhost:27017/yelp-camp'
+mongoose.connect(dbUrl), {
     addNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true,
@@ -43,13 +45,30 @@ app.set('view engine', 'ejs')
 app.use(express.urlencoded({ extended: true }))
 app.use(methodOverride('_method'))
 app.use(express.static('public'))
+app.use(mongoSanitize())
+
+//  cookie setup
+const store = new MongoStore({
+    mongoUrl: dbUrl,
+    crypto:{
+    secret: 'PidgyPoo'
+},
+    touchAfter: 24 * 60 * 60   // in seconds
+})
+
+store.on('error', function (e) {
+    console.log('Store error', e)
+})
 
 const sessionConfig = {
+    store,
+    name: 'session',
     secret: 'Smidgion',
     resave: false,
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
+        //secure:true,
         expires: Date.now() + 604800000,
         maxAge: 604800000
     }
@@ -57,6 +76,58 @@ const sessionConfig = {
 
 app.use(session(sessionConfig));
 app.use(flash());
+
+//helmet
+const scriptSrcUrls = [
+    "https://stackpath.bootstrapcdn.com/",
+    "https://api.tiles.mapbox.com/",
+    "https://api.mapbox.com/",
+    "https://kit.fontawesome.com/",
+    "https://cdnjs.cloudflare.com/",
+    "https://cdn.jsdelivr.net/",
+    "https://res.cloudinary.com/djj2nhj8d/"
+
+];
+const styleSrcUrls = [
+    "https://kit-free.fontawesome.com/",
+    "https://stackpath.bootstrapcdn.com/",
+    "https://api.mapbox.com/",
+    "https://api.tiles.mapbox.com/",
+    "https://fonts.googleapis.com/",
+    "https://use.fontawesome.com/",
+    "https://cdn.jsdelivr.net/",
+    "https://res.cloudinary.com/djj2nhj8d/"
+];
+const connectSrcUrls = [
+    "https://*.tiles.mapbox.com",
+    "https://api.mapbox.com",
+    "https://events.mapbox.com",
+    "https://res.cloudinary.com/djj2nhj8d/"
+];
+const fontSrcUrls = ["https://res.cloudinary.com/djj2nhj8d/"];
+
+app.use(
+    helmet.contentSecurityPolicy({
+        directives: {
+            defaultSrc: [],
+            connectSrc: ["'self'", ...connectSrcUrls],
+            scriptSrc: ["'unsafe-inline'", "'self'", ...scriptSrcUrls],
+            styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+            workerSrc: ["'self'", "blob:"],
+            objectSrc: [],
+            imgSrc: [
+                "'self'",
+                "blob:",
+                "data:",
+                "https://res.cloudinary.com/djj2nhj8d/", //SHOULD MATCH YOUR CLOUDINARY ACCOUNT!
+                "https://images.unsplash.com/"
+            ],
+            fontSrc: ["'self'", ...fontSrcUrls],
+            mediaSrc: ["https://res.cloudinary.com/dv5vm4sqh/"],
+            childSrc: ["blob:"]
+        }
+    })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());   // allows consistent log in sessions so you don't have to log in every request, make sure session is used first
